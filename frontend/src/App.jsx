@@ -1,8 +1,11 @@
+import Navbar from './components/Navbar'
+
 function App() {
   return (
-    <div className="text-4xl font-bold">
-      Welcome to FixKart
-    </div>
+    <>
+      <Navbar />
+      <h1>Welcome to FixKart</h1>
+    </>
   )
 }
 
