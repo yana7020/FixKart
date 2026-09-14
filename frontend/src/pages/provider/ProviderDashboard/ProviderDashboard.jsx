@@ -26,9 +26,22 @@ function ProviderDashboard() {
 
             <button
               onClick={() => setSidebarOpen(false)}
-              className="absolute top-5 right-4 text-xl text-slate-600 hover:text-blue-600 transition"
+              className="absolute top-5 right-4 w-8 h-8 flex items-center justify-center rounded-lg bg-white text-slate-600 hover:text-blue-600 shadow-sm transition"
+              aria-label="Close sidebar"
             >
-              ✕
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M18 6 6 18" />
+                <path d="m6 6 12 12" />
+              </svg>
             </button>
           </div>
         </div>
@@ -38,17 +51,30 @@ function ProviderDashboard() {
         <header className="md:hidden h-16 bg-white border-b border-slate-200 flex items-center px-5">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="text-2xl text-slate-700 hover:text-blue-600 transition"
+            className="w-9 h-9 flex items-center justify-center rounded-lg text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition"
             aria-label="Open sidebar"
           >
-            ☰
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M4 6h16" />
+              <path d="M4 12h16" />
+              <path d="M4 18h16" />
+            </svg>
           </button>
 
           <h1 className="text-xl font-bold text-blue-600 mx-auto">
             FixKart
           </h1>
 
-          <div className="w-7"></div>
+          <div className="w-9"></div>
         </header>
 
         <Outlet />

@@ -31,6 +31,8 @@ import ProviderMessages from "./pages/provider/ProviderDashboard/Messages"
 import ProviderNotifications from "./pages/provider/ProviderDashboard/Notifications"
 import ProviderProfile from "./pages/provider/ProviderDashboard/Profile"
 
+import ServiceSetup from "./pages/provider/ServiceSetup/ServiceSetup"
+
 function App() {
   return (
     <BrowserRouter>
@@ -60,6 +62,11 @@ function App() {
 
         <Route path="/provider/login" element={<ProviderLogin />} />
         <Route path="/provider/signup" element={<ProviderSignup />} />
+
+        <Route
+          path="/provider/service-setup"
+          element={<ServiceSetup />}
+        />
 
         <Route path="/provider/dashboard" element={<ProviderDashboard />}>
           <Route index element={<ProviderDashboardHome />} />

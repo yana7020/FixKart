@@ -9,26 +9,83 @@ function BookingRequests() {
     const savedBookings =
       JSON.parse(localStorage.getItem("fixkartBookings")) || []
 
-    const pendingRequests = savedBookings.filter(
-      (request) => request.status === "Pending"
-    )
+    const providerProfile =
+      JSON.parse(localStorage.getItem("fixkartProviderProfile")) || {}
 
-    setRequests(pendingRequests)
+    const providerServices =
+      JSON.parse(localStorage.getItem("fixkartProviderServices")) || []
+
+    const normalize = (value) =>
+      String(value || "")
+        .trim()
+        .toLowerCase()
+
+    const providerLocation = normalize(providerProfile.location)
+
+    const matchingRequests = savedBookings.filter((request) => {
+      const bookingLocation = normalize(request.customerLocation)
+      const bookingService = normalize(request.service?.name)
+
+      const sameLocation =
+        providerLocation && bookingLocation === providerLocation
+
+      const providesService = providerServices.some(
+        (service) => normalize(service) === bookingService
+      )
+
+      return (
+        request.status === "Pending" &&
+        sameLocation &&
+        providesService
+      )
+    })
+
+    setRequests(matchingRequests)
   }
 
   useEffect(() => {
     loadBookings()
 
     window.addEventListener("storage", loadBookings)
+    window.addEventListener(
+      "fixkartBookingsUpdated",
+      loadBookings
+    )
+    window.addEventListener(
+      "fixkartProviderServicesUpdated",
+      loadBookings
+    )
+    window.addEventListener(
+      "fixkartProfileUpdated",
+      loadBookings
+    )
 
     return () => {
       window.removeEventListener("storage", loadBookings)
+      window.removeEventListener(
+        "fixkartBookingsUpdated",
+        loadBookings
+      )
+      window.removeEventListener(
+        "fixkartProviderServicesUpdated",
+        loadBookings
+      )
+      window.removeEventListener(
+        "fixkartProfileUpdated",
+        loadBookings
+      )
     }
   }, [])
 
   const handleAccept = (id) => {
     const savedBookings =
       JSON.parse(localStorage.getItem("fixkartBookings")) || []
+
+    const providerProfile =
+      JSON.parse(localStorage.getItem("fixkartProviderProfile")) || {}
+
+    const providerName =
+      providerProfile.name || "Rajesh Kumar"
 
     const acceptedBooking = savedBookings.find(
       (booking) => booking.id === id
@@ -40,7 +97,7 @@ function BookingRequests() {
             ...booking,
             status: "Accepted",
             serviceStatus: "Accepted",
-            provider: "Rajesh Kumar",
+            provider: providerName,
           }
         : booking
     )
@@ -56,7 +113,7 @@ function BookingRequests() {
       )
     )
 
-    window.dispatchEvent(new Event("storage"))
+    window.dispatchEvent(new Event("fixkartBookingsUpdated"))
 
     if (acceptedBooking) {
       navigate("/provider/dashboard/active-job", {
@@ -65,7 +122,7 @@ function BookingRequests() {
             ...acceptedBooking,
             status: "Accepted",
             serviceStatus: "Accepted",
-            provider: "Rajesh Kumar",
+            provider: providerName,
           },
         },
       })
@@ -96,7 +153,7 @@ function BookingRequests() {
       )
     )
 
-    window.dispatchEvent(new Event("storage"))
+    window.dispatchEvent(new Event("fixkartBookingsUpdated"))
   }
 
   return (
@@ -114,16 +171,33 @@ function BookingRequests() {
 
         {requests.length === 0 ? (
           <div className="bg-white border border-slate-200 rounded-xl p-10 text-center">
-            <div className="text-4xl mb-4">
-              📋
+            <div className="w-12 h-12 mx-auto mb-4 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M8 6h13" />
+                <path d="M8 12h13" />
+                <path d="M8 18h13" />
+                <path d="M3 6h.01" />
+                <path d="M3 12h.01" />
+                <path d="M3 18h.01" />
+              </svg>
             </div>
 
             <h2 className="text-xl font-semibold text-slate-900">
-              No Pending Requests
+              No Matching Requests
             </h2>
 
             <p className="text-slate-500 mt-2">
-              New customer service requests will appear here.
+              New service requests matching your services and location
+              will appear here.
             </p>
           </div>
         ) : (

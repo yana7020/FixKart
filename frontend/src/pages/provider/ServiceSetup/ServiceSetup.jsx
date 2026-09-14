@@ -1,4 +1,9 @@
+import { useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
+
 function ServiceSetup() {
+  const navigate = useNavigate()
+
   const services = [
     "Electrician",
     "Plumbing",
@@ -6,6 +11,34 @@ function ServiceSetup() {
     "Home Cleaning",
     "Cook",
   ]
+
+  const [selectedServices, setSelectedServices] = useState([])
+
+  useEffect(() => {
+    const savedServices =
+      JSON.parse(localStorage.getItem("fixkartProviderServices")) || []
+
+    setSelectedServices(savedServices)
+  }, [])
+
+  const toggleService = (service) => {
+    setSelectedServices((currentServices) =>
+      currentServices.includes(service)
+        ? currentServices.filter((item) => item !== service)
+        : [...currentServices, service]
+    )
+  }
+
+  const handleContinue = () => {
+    localStorage.setItem(
+      "fixkartProviderServices",
+      JSON.stringify(selectedServices)
+    )
+
+    window.dispatchEvent(new Event("fixkartProviderServicesUpdated"))
+
+    navigate("/provider/dashboard")
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center px-6 py-10">
@@ -19,23 +52,63 @@ function ServiceSetup() {
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {services.map((service) => (
-            <button
-              key={service}
-              className="text-left p-5 border border-slate-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition"
-            >
-              <h2 className="font-semibold text-slate-900">
-                {service}
-              </h2>
+          {services.map((service) => {
+            const isSelected = selectedServices.includes(service)
 
-              <p className="text-sm text-slate-500 mt-1">
-                I provide this service
-              </p>
-            </button>
-          ))}
+            return (
+              <button
+                key={service}
+                type="button"
+                onClick={() => toggleService(service)}
+                className={`text-left p-5 border rounded-xl transition ${
+                  isSelected
+                    ? "border-blue-500 bg-blue-50"
+                    : "border-slate-200 hover:border-blue-500 hover:bg-blue-50"
+                }`}
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <h2 className="font-semibold text-slate-900">
+                    {service}
+                  </h2>
+
+                  <div
+                    className={`w-5 h-5 rounded-md border flex items-center justify-center ${
+                      isSelected
+                        ? "bg-blue-600 border-blue-600"
+                        : "border-slate-300"
+                    }`}
+                  >
+                    {isSelected && (
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="white"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="m5 12 4 4L19 6" />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+
+                <p className="text-sm text-slate-500 mt-1">
+                  I provide this service
+                </p>
+              </button>
+            )
+          })}
         </div>
 
-        <button className="w-full mt-8 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition">
+        <button
+          type="button"
+          onClick={handleContinue}
+          disabled={selectedServices.length === 0}
+          className="w-full mt-8 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition disabled:bg-slate-300 disabled:cursor-not-allowed"
+        >
           Continue
         </button>
       </div>

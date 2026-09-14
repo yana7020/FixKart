@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
 
 function ServiceDetails() {
@@ -5,6 +6,21 @@ function ServiceDetails() {
   const navigate = useNavigate()
 
   const service = location.state?.service
+
+  const [profile, setProfile] = useState({
+    name: "",
+    location: "",
+  })
+
+  useEffect(() => {
+    const savedProfile =
+      JSON.parse(localStorage.getItem("fixkartCustomerProfile")) || {}
+
+    setProfile({
+      name: savedProfile.name || "",
+      location: savedProfile.location || "",
+    })
+  }, [])
 
   const handleSubmit = (event) => {
     event.preventDefault()
@@ -17,11 +33,13 @@ function ServiceDetails() {
       customer: formData.get("customer"),
       phone: formData.get("phone"),
       address: formData.get("address"),
+      customerLocation: profile.location,
       date: formData.get("date"),
       time: formData.get("time"),
       details: formData.get("details"),
       price: "₹499",
       status: "Pending",
+      createdAt: new Date().toISOString(),
     }
 
     const existingBookings =
@@ -31,6 +49,8 @@ function ServiceDetails() {
       "fixkartBookings",
       JSON.stringify([...existingBookings, booking])
     )
+
+    window.dispatchEvent(new Event("fixkartBookingsUpdated"))
 
     navigate("/customer/dashboard/bookings")
   }
@@ -110,6 +130,7 @@ function ServiceDetails() {
                 type="text"
                 name="customer"
                 required
+                defaultValue={profile.name}
                 placeholder="Enter your name"
                 className="w-full px-4 py-3 border border-slate-300 rounded-lg outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               />
@@ -141,6 +162,12 @@ function ServiceDetails() {
                 placeholder="Enter the complete service address"
                 className="w-full px-4 py-3 border border-slate-300 rounded-lg outline-none resize-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               ></textarea>
+
+              {profile.location && (
+                <p className="text-xs text-slate-500 mt-2">
+                  Service city: {profile.location}
+                </p>
+              )}
             </div>
 
             <div>
