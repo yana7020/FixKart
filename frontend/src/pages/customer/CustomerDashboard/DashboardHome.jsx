@@ -1,7 +1,9 @@
+import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 
 function DashboardHome() {
   const navigate = useNavigate()
+  const [bookings, setBookings] = useState([])
 
   const services = [
     {
@@ -31,26 +33,36 @@ function DashboardHome() {
     },
   ]
 
-  const bookings = [
-    {
-      service: "Electrical Repair",
-      provider: "Rajesh Kumar",
-      date: "Today, 10:00 AM",
-      status: "Confirmed",
-    },
-    {
-      service: "Home Cleaning",
-      provider: "Sunita Sharma",
-      date: "Tomorrow, 2:00 PM",
-      status: "Pending",
-    },
-  ]
+  useEffect(() => {
+    const loadBookings = () => {
+      const savedBookings =
+        JSON.parse(localStorage.getItem("fixkartBookings")) || []
+
+      setBookings(savedBookings)
+    }
+
+    loadBookings()
+    window.addEventListener("storage", loadBookings)
+
+    return () => {
+      window.removeEventListener("storage", loadBookings)
+    }
+  }, [])
 
   const handleServiceClick = (service) => {
     navigate("/customer/dashboard/book-service/details", {
       state: { service },
     })
   }
+
+  const recentBookings = bookings
+    .filter((booking) => booking.status !== "Completed")
+    .slice(-3)
+    .reverse()
+
+  const activeBooking = bookings.find(
+    (booking) => booking.status === "Accepted"
+  )
 
   return (
     <div className="p-6 md:p-8 lg:p-10">
@@ -138,40 +150,68 @@ function DashboardHome() {
               </button>
             </div>
 
-            <div className="space-y-4">
-              {bookings.map((booking) => (
-                <div
-                  key={`${booking.service}-${booking.date}`}
-                  className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <h3 className="font-semibold text-slate-900">
-                        {booking.service}
-                      </h3>
-
-                      <p className="text-sm text-slate-600 mt-2">
-                        {booking.provider}
-                      </p>
-
-                      <p className="text-sm text-slate-500 mt-1">
-                        {booking.date}
-                      </p>
-                    </div>
-
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        booking.status === "Confirmed"
-                          ? "bg-green-50 text-green-600"
-                          : "bg-yellow-50 text-yellow-600"
-                      }`}
-                    >
-                      {booking.status}
-                    </span>
-                  </div>
+            {recentBookings.length === 0 ? (
+              <div className="bg-white border border-slate-200 rounded-xl p-8 text-center shadow-sm">
+                <div className="text-4xl mb-3">
+                  📋
                 </div>
-              ))}
-            </div>
+
+                <h3 className="font-semibold text-slate-900">
+                  No Active Bookings
+                </h3>
+
+                <p className="text-sm text-slate-500 mt-2">
+                  Your pending and accepted bookings will appear here.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {recentBookings.map((booking) => (
+                  <div
+                    key={booking.id}
+                    className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-xl">
+                            {booking.service?.icon}
+                          </div>
+
+                          <div>
+                            <h3 className="font-semibold text-slate-900">
+                              {booking.service?.name}
+                            </h3>
+
+                            <p className="text-sm text-slate-600 mt-1">
+                              {booking.provider || "Waiting for provider"}
+                            </p>
+                          </div>
+                        </div>
+
+                        <p className="text-sm text-slate-500 mt-3">
+                          {booking.date} • {booking.time}
+                        </p>
+                      </div>
+
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          booking.status === "Accepted"
+                            ? "bg-green-50 text-green-600"
+                            : booking.status === "Rejected"
+                            ? "bg-red-50 text-red-600"
+                            : "bg-yellow-50 text-yellow-600"
+                        }`}
+                      >
+                        {booking.status === "Pending"
+                          ? "Pending"
+                          : booking.status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
 
           <section>
@@ -185,54 +225,76 @@ function DashboardHome() {
               </p>
             </div>
 
-            <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-              <div className="h-48 bg-slate-100 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="text-4xl mb-2">
-                    📍
-                  </div>
-
-                  <p className="font-medium text-slate-700">
-                    Service Location
-                  </p>
-
-                  <p className="text-sm text-slate-500 mt-1">
-                    Live tracking will appear here
-                  </p>
+            {!activeBooking ? (
+              <div className="bg-white border border-slate-200 rounded-xl p-8 text-center shadow-sm">
+                <div className="text-4xl mb-3">
+                  📍
                 </div>
+
+                <h3 className="font-semibold text-slate-900">
+                  No Active Service
+                </h3>
+
+                <p className="text-sm text-slate-500 mt-2">
+                  Your accepted service will appear here.
+                </p>
               </div>
+            ) : (
+              <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                <div className="h-48 bg-slate-100 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="text-4xl mb-2">
+                      📍
+                    </div>
 
-              <div className="p-5">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-xs text-slate-500">
-                      Service Provider
+                    <p className="font-medium text-slate-700">
+                      Service Location
                     </p>
-
-                    <h3 className="font-semibold text-slate-900 mt-1">
-                      Rajesh Kumar
-                    </h3>
 
                     <p className="text-sm text-slate-500 mt-1">
-                      Electrical Repair
+                      Live tracking will appear here
                     </p>
                   </div>
-
-                  <span className="px-3 py-1 bg-green-50 text-green-600 rounded-full text-xs font-medium">
-                    On the way
-                  </span>
                 </div>
 
-                <button
-                  onClick={() =>
-                    navigate("/customer/dashboard/active-booking")
-                  }
-                  className="w-full mt-5 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition"
-                >
-                  Track Service
-                </button>
+                <div className="p-5">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-xs text-slate-500">
+                        Service Provider
+                      </p>
+
+                      <h3 className="font-semibold text-slate-900 mt-1">
+                        {activeBooking.provider || "Rajesh Kumar"}
+                      </h3>
+
+                      <p className="text-sm text-slate-500 mt-1">
+                        {activeBooking.service?.name}
+                      </p>
+
+                      <p className="text-sm text-slate-500 mt-1">
+                        {activeBooking.date} • {activeBooking.time}
+                      </p>
+                    </div>
+
+                    <span className="px-3 py-1 bg-green-50 text-green-600 rounded-full text-xs font-medium">
+                      Accepted
+                    </span>
+                  </div>
+
+                  <button
+                    onClick={() =>
+                      navigate("/customer/dashboard/active-booking", {
+                        state: { booking: activeBooking },
+                      })
+                    }
+                    className="w-full mt-5 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition"
+                  >
+                    Track Service
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </section>
         </div>
       </div>

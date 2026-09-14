@@ -32,6 +32,15 @@ function MyBookings() {
     })
   }
 
+  const handleViewDetails = (booking) => {
+    if (booking.status === "Accepted") {
+      navigate("/customer/dashboard/active-booking", {
+        state: { booking },
+      })
+      return
+    }
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 p-6 md:p-8 lg:p-10">
       <div className="max-w-6xl mx-auto space-y-8">
@@ -114,8 +123,13 @@ function MyBookings() {
                 </div>
 
                 <div className="mt-5 pt-5 border-t border-slate-200 flex flex-wrap gap-3">
-                  <button className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-200 transition">
-                    View Details
+                  <button
+                    onClick={() => handleViewDetails(booking)}
+                    className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-200 transition"
+                  >
+                    {booking.status === "Accepted"
+                      ? "View Active Booking"
+                      : "View Details"}
                   </button>
 
                   {booking.status === "Accepted" && (

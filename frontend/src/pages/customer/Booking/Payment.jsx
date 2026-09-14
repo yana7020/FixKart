@@ -22,21 +22,26 @@ function Payment() {
           </h1>
 
           <p className="text-slate-600 mt-2">
-            Please select an accepted booking to continue.
+            Please select a completed service to continue.
           </p>
 
           <button
-            onClick={() => navigate("/customer/dashboard/bookings")}
+            onClick={() =>
+              navigate("/customer/dashboard/active-booking")
+            }
             className="mt-6 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
           >
-            Back to My Bookings
+            Back to Active Booking
           </button>
         </div>
       </div>
     )
   }
 
-  if (booking.status !== "Accepted") {
+  if (
+    booking.status !== "Accepted" ||
+    booking.serviceStatus !== "Completed"
+  ) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center px-6">
         <div className="bg-white border border-slate-200 rounded-xl p-8 text-center shadow-sm">
@@ -45,14 +50,17 @@ function Payment() {
           </h1>
 
           <p className="text-slate-600 mt-2">
-            Payment is available after the provider accepts your booking.
+            Payment will be available after the provider
+            completes the service.
           </p>
 
           <button
-            onClick={() => navigate("/customer/dashboard/bookings")}
+            onClick={() =>
+              navigate("/customer/dashboard/active-booking")
+            }
             className="mt-6 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
           >
-            Back to My Bookings
+            Back to Active Booking
           </button>
         </div>
       </div>
@@ -68,10 +76,13 @@ function Payment() {
         ? {
             ...item,
             status: "Completed",
+            serviceStatus: "Completed",
             paymentMethod,
             totalAmount,
             paymentStatus:
-              paymentMethod === "cash" ? "Pay After Service" : "Paid",
+              paymentMethod === "cash"
+                ? "Pay After Service"
+                : "Paid",
           }
         : item
     )
@@ -81,15 +92,22 @@ function Payment() {
       JSON.stringify(updatedBookings)
     )
 
+    localStorage.removeItem(`fixkartChat_${booking.id}`)
+
     const updatedBooking = updatedBookings.find(
       (item) => item.id === booking.id
     )
 
-    navigate("/customer/dashboard/book-service/confirmation", {
-      state: {
-        booking: updatedBooking,
-      },
-    })
+    window.dispatchEvent(new Event("storage"))
+
+    navigate(
+      "/customer/dashboard/book-service/confirmation",
+      {
+        state: {
+          booking: updatedBooking,
+        },
+      }
+    )
   }
 
   return (
@@ -97,10 +115,12 @@ function Payment() {
       <div className="max-w-5xl mx-auto">
         <div className="mb-8">
           <button
-            onClick={() => navigate("/customer/dashboard/bookings")}
+            onClick={() =>
+              navigate("/customer/dashboard/active-booking")
+            }
             className="text-sm font-medium text-blue-600 hover:text-blue-700"
           >
-            ← Back to My Bookings
+            ← Back to Active Booking
           </button>
 
           <h1 className="text-3xl font-bold text-slate-900 mt-5">
@@ -108,7 +128,7 @@ function Payment() {
           </h1>
 
           <p className="text-slate-600 mt-2">
-            Complete your payment to confirm the service booking.
+            Complete your payment to finish the service booking.
           </p>
         </div>
 
@@ -135,7 +155,8 @@ function Payment() {
                     </p>
 
                     <p className="text-sm text-slate-500 mt-1">
-                      Pay using Google Pay, PhonePe or other UPI apps
+                      Pay using Google Pay, PhonePe or other UPI
+                      apps
                     </p>
                   </div>
 
@@ -170,7 +191,9 @@ function Payment() {
 
                 <button
                   type="button"
-                  onClick={() => setPaymentMethod("netbanking")}
+                  onClick={() =>
+                    setPaymentMethod("netbanking")
+                  }
                   className={`w-full flex items-center justify-between p-4 border rounded-lg text-left transition ${
                     paymentMethod === "netbanking"
                       ? "border-blue-500 bg-blue-50"
@@ -279,7 +302,7 @@ function Payment() {
                     Select Bank
                   </label>
 
-                  <select className="w-full px-4 py-3 border border-slate-300 rounded-lg outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+                  <select className="w-full px-4 py-3 border border-slate-300 rounded-lg outline-none focus:border-blue-500">
                     <option>Select your bank</option>
                     <option>State Bank of India</option>
                     <option>HDFC Bank</option>
@@ -293,8 +316,8 @@ function Payment() {
               {paymentMethod === "cash" && (
                 <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                   <p className="text-sm text-yellow-800">
-                    You can pay the service provider in cash after the service
-                    is completed.
+                    You can pay the service provider in cash
+                    after the service is completed.
                   </p>
                 </div>
               )}
@@ -360,12 +383,13 @@ function Payment() {
                 className="w-full mt-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
               >
                 {paymentMethod === "cash"
-                  ? "Confirm Booking"
+                  ? "Confirm Payment"
                   : `Pay ₹${totalAmount}`}
               </button>
 
               <p className="text-xs text-slate-500 text-center mt-4">
-                Your payment information will be securely processed.
+                Your payment information will be securely
+                processed.
               </p>
             </div>
           </div>

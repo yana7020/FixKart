@@ -2,18 +2,21 @@ import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 
 function BookingRequests() {
+  const [requests, setRequests] = useState([])
   const navigate = useNavigate()
 
-  const [requests, setRequests] = useState([])
+  const loadBookings = () => {
+    const savedBookings =
+      JSON.parse(localStorage.getItem("fixkartBookings")) || []
+
+    const pendingRequests = savedBookings.filter(
+      (request) => request.status === "Pending"
+    )
+
+    setRequests(pendingRequests)
+  }
 
   useEffect(() => {
-    const loadBookings = () => {
-      const savedBookings =
-        JSON.parse(localStorage.getItem("fixkartBookings")) || []
-
-      setRequests(savedBookings)
-    }
-
     loadBookings()
 
     window.addEventListener("storage", loadBookings)
@@ -24,49 +27,77 @@ function BookingRequests() {
   }, [])
 
   const handleAccept = (id) => {
-    const updatedRequests = requests.map((request) =>
-      request.id === id
-        ? {
-            ...request,
-            status: "Accepted",
-            provider: "Rajesh Kumar",
-          }
-        : request
+    const savedBookings =
+      JSON.parse(localStorage.getItem("fixkartBookings")) || []
+
+    const acceptedBooking = savedBookings.find(
+      (booking) => booking.id === id
     )
 
-    setRequests(updatedRequests)
+    const updatedBookings = savedBookings.map((booking) =>
+      booking.id === id
+        ? {
+            ...booking,
+            status: "Accepted",
+            serviceStatus: "Accepted",
+            provider: "Rajesh Kumar",
+          }
+        : booking
+    )
 
     localStorage.setItem(
       "fixkartBookings",
-      JSON.stringify(updatedRequests)
+      JSON.stringify(updatedBookings)
     )
+
+    setRequests(
+      updatedBookings.filter(
+        (booking) => booking.status === "Pending"
+      )
+    )
+
+    window.dispatchEvent(new Event("storage"))
+
+    if (acceptedBooking) {
+      navigate("/provider/dashboard/active-job", {
+        state: {
+          booking: {
+            ...acceptedBooking,
+            status: "Accepted",
+            serviceStatus: "Accepted",
+            provider: "Rajesh Kumar",
+          },
+        },
+      })
+    }
   }
 
   const handleReject = (id) => {
-    const updatedRequests = requests.map((request) =>
-      request.id === id
+    const savedBookings =
+      JSON.parse(localStorage.getItem("fixkartBookings")) || []
+
+    const updatedBookings = savedBookings.map((booking) =>
+      booking.id === id
         ? {
-            ...request,
+            ...booking,
             status: "Rejected",
           }
-        : request
+        : booking
     )
-
-    setRequests(updatedRequests)
 
     localStorage.setItem(
       "fixkartBookings",
-      JSON.stringify(updatedRequests)
+      JSON.stringify(updatedBookings)
     )
+
+    setRequests(
+      updatedBookings.filter(
+        (booking) => booking.status === "Pending"
+      )
+    )
+
+    window.dispatchEvent(new Event("storage"))
   }
-
-  const pendingRequests = requests.filter(
-    (request) => request.status === "Pending"
-  )
-
-  const processedRequests = requests.filter(
-    (request) => request.status !== "Pending"
-  )
 
   return (
     <div className="p-6 md:p-8 lg:p-10">
@@ -81,7 +112,7 @@ function BookingRequests() {
           </p>
         </div>
 
-        {pendingRequests.length === 0 ? (
+        {requests.length === 0 ? (
           <div className="bg-white border border-slate-200 rounded-xl p-10 text-center">
             <div className="text-4xl mb-4">
               📋
@@ -97,7 +128,7 @@ function BookingRequests() {
           </div>
         ) : (
           <div className="space-y-5">
-            {pendingRequests.map((request) => (
+            {requests.map((request) => (
               <div
                 key={request.id}
                 className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm"
@@ -165,76 +196,9 @@ function BookingRequests() {
             ))}
           </div>
         )}
-
-        {processedRequests.length > 0 && (
-          <section className="mt-10">
-            <div className="mb-5">
-              <h2 className="text-xl font-bold text-slate-900">
-                Processed Requests
-              </h2>
-
-              <p className="text-sm text-slate-500 mt-1">
-                Requests you have already responded to.
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              {processedRequests.map((request) => (
-                <div
-                  key={request.id}
-                  className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm"
-                >
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                    <div>
-                      <h3 className="font-semibold text-slate-900">
-                        {request.service?.name}
-                      </h3>
-
-                      <p className="text-sm text-slate-600 mt-1">
-                        {request.customer}
-                      </p>
-
-                      <p className="text-sm text-slate-500 mt-1">
-                        {request.date} · {request.time}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          request.status === "Accepted"
-                            ? "bg-green-50 text-green-600"
-                            : request.status === "Completed"
-                            ? "bg-blue-50 text-blue-600"
-                            : "bg-red-50 text-red-600"
-                        }`}
-                      >
-                        {request.status}
-                      </span>
-
-                      {request.status === "Accepted" && (
-                        <button
-                          onClick={() =>
-                            navigate("/provider/dashboard/active-job", {
-                              state: { booking: request },
-                            })
-                          }
-                          className="text-sm font-medium text-blue-600 hover:text-blue-700"
-                        >
-                          View Active Job →
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
       </div>
     </div>
   )
 }
 
 export default BookingRequests
-
