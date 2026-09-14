@@ -1,4 +1,8 @@
+import { useNavigate } from "react-router-dom"
+
 function CTA() {
+  const navigate = useNavigate()
+
   return (
     <section className="px-6 py-12 bg-[#172554] text-white">
       <div className="max-w-4xl mx-auto text-center">
@@ -20,7 +24,7 @@ function CTA() {
         </p>
 
         <button
-          onClick={() => alert("Let's get started with FixKart!")}
+          onClick={() => navigate("/role-selection")}
           className="px-7 py-2.5 bg-white text-[#172554] font-semibold rounded-lg hover:bg-blue-50 transition"
         >
           Get Started

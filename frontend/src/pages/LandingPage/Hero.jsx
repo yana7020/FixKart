@@ -1,11 +1,13 @@
+import { useNavigate } from "react-router-dom"
 import heroImage from "../../assets/hero.jpg"
 
 function Hero() {
+  const navigate = useNavigate()
+
   return (
     <section className="bg-white px-6 py-16">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 items-center gap-10">
 
-        {/* Left Side */}
         <div>
 
           <p className="text-blue-600 font-semibold mb-4">
@@ -26,7 +28,7 @@ function Hero() {
           </p>
 
           <button
-            onClick={() => alert("Let's get started with FixKart!")}
+            onClick={() => navigate("/role-selection")}
             className="px-7 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition"
           >
             Book a Service Now
@@ -34,8 +36,6 @@ function Hero() {
 
         </div>
 
-
-        {/* Right Side */}
         <div className="flex justify-center">
 
           <img
