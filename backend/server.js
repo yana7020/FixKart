@@ -9,6 +9,7 @@ const messageRoutes = require("./routes/messageRoutes")
 const notificationRoutes = require("./routes/notificationRoutes")
 const locationRoutes = require("./routes/locationRoutes")
 const profileRoutes = require("./routes/profileRoutes")
+const adminRoutes = require("./routes/adminRoutes")
 
 dotenv.config()
 
@@ -32,6 +33,7 @@ app.use("/api/messages", messageRoutes)
 app.use("/api/notifications", notificationRoutes)
 app.use("/api/location", locationRoutes)
 app.use("/api/profile", profileRoutes)
+app.use("/api/admin", adminRoutes)
 
 const PORT = process.env.PORT || 5000
 
