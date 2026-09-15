@@ -1,5 +1,6 @@
 const Message = require("../models/Message")
 const Booking = require("../models/Booking")
+const createNotification = require("../utils/notificationHelper")
 
 const sendMessage = async (req, res) => {
   try {
@@ -8,6 +9,12 @@ const sendMessage = async (req, res) => {
     if (!receiver || !booking || !text) {
       return res.status(400).json({
         message: "Receiver, booking, and message text are required",
+      })
+    }
+
+    if (receiver === req.user.userId) {
+      return res.status(400).json({
+        message: "You cannot send a message to yourself",
       })
     }
 
@@ -20,20 +27,27 @@ const sendMessage = async (req, res) => {
     }
 
     const isParticipant =
-        existingBooking.customer.toString() === req.user.userId ||
-        (existingBooking.provider &&
-            existingBooking.provider.toString() === req.user.userId)
+      existingBooking.customer.toString() === req.user.userId ||
+      (existingBooking.provider &&
+        existingBooking.provider.toString() === req.user.userId)
 
-        if (!isParticipant) {
-        return res.status(403).json({
-            message: "You are not a participant in this booking",
-        })
-        }
+    if (!isParticipant) {
+      return res.status(403).json({
+        message: "You are not a participant in this booking",
+      })
+    }
 
-        if (!["Accepted", "On the Way", "Reached Destination", "Service Started"].includes(existingBooking.status)) {
-        return res.status(400).json({
-            message: "Chat is available only after the booking is accepted",
-        })
+    if (
+      ![
+        "Accepted",
+        "On the Way",
+        "Reached Destination",
+        "Service Started",
+      ].includes(existingBooking.status)
+    ) {
+      return res.status(400).json({
+        message: "Chat is available only after the booking is accepted",
+      })
     }
 
     const isReceiverParticipant =
@@ -52,6 +66,14 @@ const sendMessage = async (req, res) => {
       receiver,
       booking,
       text,
+    })
+
+    await createNotification({
+      user: receiver,
+      type: "Message",
+      title: "New Message",
+      message: "You have received a new message.",
+      booking: booking,
     })
 
     await message.populate("sender", "name email")

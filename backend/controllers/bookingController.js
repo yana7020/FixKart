@@ -1,5 +1,6 @@
 const Booking = require("../models/Booking")
 const User = require("../models/User")
+const createNotification = require("../utils/notificationHelper")
 
 const createBooking = async (req, res) => {
   try {
@@ -36,6 +37,22 @@ const createBooking = async (req, res) => {
       details: details || "",
       price,
     })
+
+    const providers = await User.find({
+      role: "provider",
+      location: customerLocation,
+      services: service,
+    })
+
+    for (const provider of providers) {
+      await createNotification({
+        user: provider._id,
+        type: "Booking",
+        title: "New Booking Request",
+        message: `A new ${service} booking request is available in your area.`,
+        booking: booking._id,
+      })
+    }
 
     res.status(201).json({
       message: "Booking created successfully",
@@ -146,6 +163,14 @@ const acceptBooking = async (req, res) => {
 
     await booking.save()
 
+    await createNotification({
+      user: booking.customer,
+      type: "Booking Accepted",
+      title: "Booking Accepted",
+      message: `Your ${booking.service} booking has been accepted by the service provider.`,
+      booking: booking._id,
+    })
+
     await booking.populate("customer", "name email location")
     await booking.populate("provider", "name email location rating")
 
@@ -188,6 +213,14 @@ const rejectBooking = async (req, res) => {
     booking.status = "Rejected"
 
     await booking.save()
+
+    await createNotification({
+      user: booking.customer,
+      type: "Booking Rejected",
+      title: "Booking Rejected",
+      message: `Your ${booking.service} booking request has been rejected by a service provider.`,
+      booking: booking._id,
+    })
 
     res.status(200).json({
       message: "Booking rejected successfully",
@@ -240,6 +273,37 @@ const updateBookingStatus = async (req, res) => {
     booking.status = status
 
     await booking.save()
+
+    const statusMessages = {
+      "On the Way": {
+        title: "Provider Is On the Way",
+        message: `Your ${booking.service} service provider is on the way.`,
+      },
+      "Reached Destination": {
+        title: "Provider Has Arrived",
+        message: `Your ${booking.service} service provider has reached your location.`,
+      },
+      "Service Started": {
+        title: "Service Started",
+        message: `Your ${booking.service} service has started.`,
+      },
+      "Service Completed": {
+        title: "Service Completed",
+        message: `Your ${booking.service} service has been completed.`,
+      },
+    }
+
+    const notification = statusMessages[status]
+
+    if (notification) {
+      await createNotification({
+        user: booking.customer,
+        type: "Booking Status",
+        title: notification.title,
+        message: notification.message,
+        booking: booking._id,
+      })
+    }
 
     res.status(200).json({
       message: "Booking status updated successfully",
@@ -302,6 +366,16 @@ const completePayment = async (req, res) => {
     booking.completedAt = new Date()
 
     await booking.save()
+
+    if (booking.provider) {
+      await createNotification({
+        user: booking.provider,
+        type: "Payment",
+        title: "Payment Completed",
+        message: `Payment for the ${booking.service} service has been completed by the customer.`,
+        booking: booking._id,
+      })
+    }
 
     res.status(200).json({
       message: "Payment completed successfully",
@@ -371,6 +445,14 @@ const rateProvider = async (req, res) => {
 
     await User.findByIdAndUpdate(booking.provider, {
       rating: averageRating,
+    })
+
+    await createNotification({
+      user: booking.provider,
+      type: "Review",
+      title: "New Review Received",
+      message: `A customer has rated your ${booking.service} service.`,
+      booking: booking._id,
     })
 
     res.status(200).json({
@@ -443,6 +525,14 @@ const rateCustomer = async (req, res) => {
 
     await User.findByIdAndUpdate(booking.customer, {
       rating: averageRating,
+    })
+
+    await createNotification({
+      user: booking.customer,
+      type: "Review",
+      title: "New Review Received",
+      message: `Your service provider has rated your ${booking.service} service experience.`,
+      booking: booking._id,
     })
 
     res.status(200).json({

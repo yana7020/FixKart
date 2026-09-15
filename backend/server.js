@@ -6,6 +6,7 @@ const authRoutes = require("./routes/authRoutes")
 const testRoutes = require("./routes/testRoutes")
 const bookingRoutes = require("./routes/bookingRoutes")
 const messageRoutes = require("./routes/messageRoutes")
+const notificationRoutes = require("./routes/notificationRoutes")
 
 dotenv.config()
 
@@ -26,6 +27,7 @@ app.use("/api/auth", authRoutes)
 app.use("/api/test", testRoutes)
 app.use("/api/bookings", bookingRoutes)
 app.use("/api/messages", messageRoutes)
+app.use("/api/notifications", notificationRoutes)
 
 const PORT = process.env.PORT || 5000
 
