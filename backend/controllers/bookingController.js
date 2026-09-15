@@ -73,7 +73,7 @@ const getProviderBookings = async (req, res) => {
     const bookings = await Booking.find({
       provider: req.user.userId,
     })
-      .populate("customer", "name email location")
+      .populate("customer", "name email location rating")
       .sort({ createdAt: -1 })
 
     res.status(200).json({
@@ -315,6 +315,150 @@ const completePayment = async (req, res) => {
   }
 }
 
+const rateProvider = async (req, res) => {
+  try {
+    const { rating, review } = req.body
+
+    if (!rating || rating < 1 || rating > 5) {
+      return res.status(400).json({
+        message: "Rating must be between 1 and 5",
+      })
+    }
+
+    const booking = await Booking.findOne({
+      _id: req.params.id,
+      customer: req.user.userId,
+      status: "Completed",
+    })
+
+    if (!booking) {
+      return res.status(404).json({
+        message: "Completed booking not found",
+      })
+    }
+
+    if (!booking.provider) {
+      return res.status(400).json({
+        message: "This booking has no provider",
+      })
+    }
+
+    if (booking.customerRating !== null) {
+      return res.status(400).json({
+        message: "You have already rated this provider",
+      })
+    }
+
+    booking.customerRating = rating
+    booking.customerReview = review || ""
+
+    await booking.save()
+
+    const providerBookings = await Booking.find({
+      provider: booking.provider,
+      customerRating: { $ne: null },
+    })
+
+    const totalRating = providerBookings.reduce(
+      (sum, item) => sum + item.customerRating,
+      0
+    )
+
+    const averageRating =
+      providerBookings.length > 0
+        ? Number((totalRating / providerBookings.length).toFixed(1))
+        : 0
+
+    await User.findByIdAndUpdate(booking.provider, {
+      rating: averageRating,
+    })
+
+    res.status(200).json({
+      message: "Provider rated successfully",
+      rating: booking.customerRating,
+      review: booking.customerReview,
+      providerRating: averageRating,
+    })
+  } catch (error) {
+    res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    })
+  }
+}
+
+const rateCustomer = async (req, res) => {
+  try {
+    const { rating, review } = req.body
+
+    if (!rating || rating < 1 || rating > 5) {
+      return res.status(400).json({
+        message: "Rating must be between 1 and 5",
+      })
+    }
+
+    const booking = await Booking.findOne({
+      _id: req.params.id,
+      provider: req.user.userId,
+      status: "Completed",
+    })
+
+    if (!booking) {
+      return res.status(404).json({
+        message: "Completed booking not found",
+      })
+    }
+
+    if (!booking.customer) {
+      return res.status(400).json({
+        message: "This booking has no customer",
+      })
+    }
+
+    if (booking.providerRating !== null) {
+      return res.status(400).json({
+        message: "You have already rated this customer",
+      })
+    }
+
+    booking.providerRating = rating
+    booking.providerReview = review || ""
+
+    await booking.save()
+
+    const customerBookings = await Booking.find({
+      customer: booking.customer,
+      providerRating: { $ne: null },
+    })
+
+    const totalRating = customerBookings.reduce(
+      (sum, item) => sum + item.providerRating,
+      0
+    )
+
+    const averageRating =
+      customerBookings.length > 0
+        ? Number((totalRating / customerBookings.length).toFixed(1))
+        : 0
+
+    await User.findByIdAndUpdate(booking.customer, {
+      rating: averageRating,
+    })
+
+    res.status(200).json({
+      message: "Customer rated successfully",
+      rating: booking.providerRating,
+      review: booking.providerReview,
+      customerRating: averageRating,
+    })
+  } catch (error) {
+    res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    })
+  }
+}
+
 module.exports = {
   createBooking,
   getCustomerBookings,
@@ -325,4 +469,6 @@ module.exports = {
   updateBookingStatus,
   initiatePayment,
   completePayment,
+  rateProvider,
+  rateCustomer,
 }
